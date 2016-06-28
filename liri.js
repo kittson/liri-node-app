@@ -1,75 +1,83 @@
-//homework assignment liri-siri, week 10
+//homework assignment liri-siri, week 10 - homework 8
 //Booth Kittson
-//small change to test git
+var usageMsg = '"Sorry, did not understand your input. Try again!\n' +
+ 'Usage: node liri.js [my-tweets | spotify-this songName | movie-this movieName| do-what] \n"';
+
 var keys = require('./keys.js');
 var twit = require('twitter');
 var request = require('request');
-var spotify = require('spotify');
+var SpotifyWebApi = require('spotify-web-api-node');
+var fs = require('fs');
+
+var spotifyApi = new SpotifyWebApi({
+  clientId : keys.spotifyInfo.clientId,
+  clientSecret : keys.spotifyInfo.clientSecret,
+  redirectUri : 'http://www.example.com/callback'
+});
 
 //gets the twitter api key information from keys.js
 var client = new twit({
-  //"consumer_secret": keys.consumer_secret,  
-  //"consumer_key": keys.consumer_key,
-  //"access_token": keys.access_token,
-  //"access_token_secret": keys.access_token_secret
   consumer_secret: keys.twitterKeys.consumer_secret,
   consumer_key: keys.twitterKeys.consumer_key,
   access_token_key: keys.twitterKeys.access_token_key,
   access_token_secret: keys.twitterKeys.access_token_secret
 });
 
-var params = {screen_name: 'gazorna'}; //twitter username
+var params = keys.twitterKeys.userParams; //twitter username
 
 var argToDo = process.argv[2];
+var stringToDo = process.argv[3];
+doIt(argToDo, stringToDo);
 
-switch (argToDo) {
-	case 'my-tweets': 
-		client.get('statuses/user_timeline', params, function(error, tweets, response){
-			if (!error) {
-			console.log(tweets[0].text);
-			}
-		});           		
-	break;
+function doIt( someArgCommand, stringStuff){
+	switch (someArgCommand) {
+		case 'my-tweets': 
+			client.get('statuses/user_timeline', params, function(error, tweets, response){
+				if (!error) {
+					for (var t=0; t<tweets.length; t++){
+					console.log(tweets[t].text);					
+					}
+					if ( tweets.length < 20 ){
+						console.log("Gee, sorry, less than 20 tweets.")
+					}
+				}
+			});           		
+		break;
 
-	case 'spotify-this': 
-		spotify.lookup({ type: 'track', query: 'dancing in the moonlight' }, function(err, data) {
-			if ( err ) {
-			  console.log('Error occurred: ' + err);
-			  return;
-			}
-	 	console.log(data);
-	    // Do something with 'data' 
-	 	});
-	break;
+		case 'spotify-this': 	
+			spotifyApi.searchTracks('track:' + stringStuff)
+				.then(function(data) {
+				console.log('Artist Name: ', data.body.tracks.items[0].artists[0].name);
+				console.log('Song Name: ', data.body.tracks.items[0].name);
+				console.log('Album Name: ', data.body.tracks.items[0].album.name);
+				console.log('Song URL: ', data.body.tracks.items[0].album.external_urls.spotify);				
+				//console.log('Song URL: ', data.body.tracks.items[0].album.preview_url);
+				//console.log('Link to Song: ', data.body.tracks.name);
+				//console.log('data: ', data.body.tracks);
+			}, function(err) {
+				console.error(usageMsg);
+			});
+			
+		break;
 
-	case 'movie-this': 
-	var myMovie = "Elf";
- 	request('http://www.omdbapi.com?t=' + myMovie, function (error, response, body) {
-	 	if (!error && response.statusCode == 200) {
-	    	//console.log(body); // Show the HTML for the Google homepage.
-			var movieData = JSON.parse(body);
-			console.log(movieData); 
-	 	}
-	})
-	break;
+		case 'movie-this': 
+			request('http://www.omdbapi.com?t=' + stringStuff, function (error, response, body) {
+				if (!error && response.statusCode == 200) {					
+					var movieData = JSON.parse(body);
+					console.log(movieData); 
+				}
+			})
+		break;
 
-	case 'do-what': 
-		results = firstNum/secondNum;
-		console.log(results);
-	break;	
+		case 'do-what': 			
+			fs.readFile("random.txt", "utf8", function(error, data) {		
+			console.log(data);
+			var newArguments = data.split(",");
+			doIt(newArguments[0], newArguments[1]);
+			});
+		break;	
 
-	default:
-	console.log("Sorry, didn't understand input. Try again!\n" +
-	"Usage: node liri.js [my-tweets | spotify-this | movie-this | do-what] \n"); 
-};//switch
-
-/*var express = require('express');
-var appTest = express();
-
-appTest.get('/',function (req, res) {
-	res.send('Hellow Weorls!');
-});
-
-appTest.listen(3000, function() {
-	console.log('Eampale app listening on port 3000');
-});*/
+		default:
+		console.log(usageMsg); 
+	};//switch
+};//function doIt
