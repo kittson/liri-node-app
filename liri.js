@@ -1,7 +1,7 @@
 //homework assignment liri-siri, week 10 - homework 8
 //Booth Kittson
-var usageMsg = '"Sorry, did not understand your input. Try again!\n' +
- 'Usage: node liri.js [my-tweets | spotify-this songName | movie-this movieName| do-what] \n"';
+var usageMsg = 'Sorry, did not understand your input. Try again!\n' +
+ 'Usage: node liri.js [my-tweets | spotify-this songName | movie-this movieName| do-what] \n';
 
 var keys = require('./keys.js');
 var twit = require('twitter');
